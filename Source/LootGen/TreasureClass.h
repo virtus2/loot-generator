@@ -112,7 +112,7 @@ struct FTreasureClass
 public:
 	FTreasureClass() 
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Default Constructor of FTreasureClass should not be called!"));
+		// UE_LOG(LogTemp, Warning, TEXT("Default Constructor of FTreasureClass should not be called!"));
 	}
 
 	FTreasureClass(FD2TreasureClass* D2TreasureClass)
