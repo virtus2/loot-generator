@@ -23,11 +23,9 @@ class LOOTGEN_API ULootGenerator : public UGameInstanceSubsystem
 	
 public:
 	ULootGenerator(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-	
-	void InitializeWeaponData(TObjectPtr<UDataTable> WeaponDataTable);
-	void InitializeArmorData(TObjectPtr<UDataTable> ArmorDataTable);
-	void InitializeMiscData(TObjectPtr<UDataTable> MiscDataTable);
-	void InitializeItemTypeData(TObjectPtr<UDataTable> ItemTypeDataTable);
+
+	template<typename FD2, typename T>
+	void Initialize(TObjectPtr<UDataTable> DataTable, TMap<FName, TObjectPtr<T>>& MapByName, TMap<FName, TObjectPtr<T>>& MapByCode);
 	void InitializeTreasureClassData(TObjectPtr<UDataTable> TreasureClassDataTable);
 
 	void DetermineItemAndQuality(FName TreasureClassNameOrItemCode, FQualityFactor QualityFactor = FQualityFactor());
@@ -42,9 +40,9 @@ private:
 	TMap<FName, FTreasureClass> TreasureClassMap;
 
 	UPROPERTY()
-	TMap<FName, UItemType*> ItemTypeMap; // By Name
+	TMap<FName, TObjectPtr<UItemType>> ItemTypeMap; // By Name
 	UPROPERTY()
-	TMap<FName, UItemType*> ItemTypeByCode; // By Code
+	TMap<FName, TObjectPtr<UItemType>> ItemTypeByCode; // By Code
 
 	UPROPERTY()
 	TMap<FName, TObjectPtr<UWeapon>> WeaponMap; // By Name

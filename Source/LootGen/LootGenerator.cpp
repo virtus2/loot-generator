@@ -31,67 +31,26 @@ ULootGenerator::ULootGenerator(const FObjectInitializer& ObjectInitializer)
 	TObjectPtr<UDataTable> ItemTypeDataTable = ItemTypeDataTableClass.Object;
 	TObjectPtr<UDataTable> TreasureClassDataTable = TreasureClassDataTableClass.Object;
 
-	// TODO: Template Method is better?
-	InitializeWeaponData(WeaponDataTable);
-	InitializeArmorData(ArmorDataTable);
-	InitializeMiscData(MiscDataTable);
-	InitializeItemTypeData(ItemTypeDataTable); 
+	Initialize<FD2Weapon, UWeapon>(WeaponDataTable, WeaponMap, WeaponByCode);
+	Initialize<FD2Armor, UArmor>(ArmorDataTable, ArmorMap, ArmorByCode);
+	Initialize<FD2Misc, UMisc>(MiscDataTable, MiscMap, MiscByCode);
+	Initialize<FD2ItemType, UItemType>(ItemTypeDataTable, ItemTypeMap, ItemTypeByCode);
+
 	InitializeTreasureClassData(TreasureClassDataTable); // Must be called after the initialization of the ItemType.
 }
 
-void ULootGenerator::InitializeWeaponData(TObjectPtr<UDataTable> WeaponDataTable)
+template<typename FD2, typename T>
+void ULootGenerator::Initialize(TObjectPtr<UDataTable> DataTable, TMap<FName, TObjectPtr<T>>& MapByName, TMap<FName, TObjectPtr<T>>& MapByCode)
 {
-	const FString Context;
-	TArray<FName> WeaponNames = WeaponDataTable->GetRowNames();
-	for (const auto& Name : WeaponNames)
+const FString Context;
+	TArray<FName> Names = DataTable->GetRowNames();
+	for (const auto& Name : Names)
 	{
-		FD2Weapon* D2Weapon = WeaponDataTable->FindRow<FD2Weapon>(Name, Context);
-		UWeapon* Weapon = NewObject<UWeapon>();
-		Weapon->Initialize(Name, D2Weapon);
-		WeaponMap.Add(Name, Weapon);
-		WeaponByCode.Add(Weapon->Code, Weapon);
-	}
-}
-
-void ULootGenerator::InitializeArmorData(TObjectPtr<UDataTable> ArmorDataTable)
-{
-	const FString Context;
-	TArray<FName> ArmorNames = ArmorDataTable->GetRowNames();
-	for (const auto& Name : ArmorNames)
-	{
-		FD2Armor* D2Armor = ArmorDataTable->FindRow<FD2Armor>(Name, Context);
-		UArmor* Armor = NewObject<UArmor>();
-		Armor->Initialize(Name, D2Armor);
-		ArmorMap.Add(Name, Armor);
-		ArmorByCode.Add(Armor->Code, Armor);
-	}
-}
-
-void ULootGenerator::InitializeMiscData(TObjectPtr<UDataTable> MiscDataTable)
-{
-	const FString Context;
-	TArray<FName> MiscNames = MiscDataTable->GetRowNames();
-	for (const auto& Name : MiscNames)
-	{
-		FD2Misc* D2Misc = MiscDataTable->FindRow<FD2Misc>(Name, Context);
-		UMisc* Misc = NewObject<UMisc>();
-		Misc->Initialize(Name, D2Misc);
-		MiscMap.Add(Name, Misc);
-		MiscByCode.Add(Misc->Code, Misc);
-	}
-}
-
-void ULootGenerator::InitializeItemTypeData(TObjectPtr<UDataTable> ItemTypeDataTable)
-{
-	const FString Context;
-	TArray<FName> ItemTypes = ItemTypeDataTable->GetRowNames();
-	for (const auto& ItemType : ItemTypes)
-	{
-		FD2ItemType* D2ItemTypeData = ItemTypeDataTable->FindRow<FD2ItemType>(ItemType, Context);
-		UItemType* ItemTypeData = NewObject<UItemType>();
-		ItemTypeData->Initialize(ItemType, D2ItemTypeData);
-		ItemTypeMap.Add(ItemType, ItemTypeData);
-		ItemTypeByCode.Add(ItemTypeData->Code, ItemTypeData);
+		FD2* Data = DataTable->FindRow<FD2>(Name, Context);
+		T* Item = NewObject<T>();
+		Item->Initialize(Name, Data);
+		MapByName.Add(Name, Item);
+		MapByCode.Add(Item->Code, Item);
 	}
 }
 
