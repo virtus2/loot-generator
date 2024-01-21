@@ -8,6 +8,8 @@
 #include "TreasureClass.h"
 #include "ItemType.h"
 #include "Armor.h"
+#include "Weapon.h"
+#include "Misc.h"
 
 #include "LootGenerator.generated.h"
 
@@ -22,25 +24,41 @@ class LOOTGEN_API ULootGenerator : public UGameInstanceSubsystem
 public:
 	ULootGenerator(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
+	void InitializeWeaponData(TObjectPtr<UDataTable> WeaponDataTable);
 	void InitializeArmorData(TObjectPtr<UDataTable> ArmorDataTable);
+	void InitializeMiscData(TObjectPtr<UDataTable> MiscDataTable);
 	void InitializeItemTypeData(TObjectPtr<UDataTable> ItemTypeDataTable);
 	void InitializeTreasureClassData(TObjectPtr<UDataTable> TreasureClassDataTable);
-
-	void Test();
 
 	void DetermineItemAndQuality(FName TreasureClassNameOrItemCode, FQualityFactor QualityFactor = FQualityFactor());
 	FTreasureClass* FindTreasureClassFromDataTable(FName TreasureClassName);
 	void RollTreasureClassPicks(FTreasureClass* TreasureClass, FQualityFactor& QualityFactor);
 	void GenerateLoot(FName ItemCode, FQualityFactor& QualityFactor);
 
+	UFUNCTION(BlueprintCallable)
+	void TestGenerateLoot(FName TreasureClassNameOrItemCode, int Count);
+
 private:
-	UPROPERTY()
 	TMap<FName, FTreasureClass> TreasureClassMap;
 
 	UPROPERTY()
-	TMap<FName, FItemType> ItemTypeMap;
+	TMap<FName, UItemType*> ItemTypeMap; // By Name
+	UPROPERTY()
+	TMap<FName, UItemType*> ItemTypeByCode; // By Code
 
 	UPROPERTY()
-	TMap<FName, FArmor> ArmorMap;
+	TMap<FName, TObjectPtr<UWeapon>> WeaponMap; // By Name
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UWeapon>> WeaponByCode; // By Code
+
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UArmor>> ArmorMap; // By Name
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UArmor>> ArmorByCode; // By Code
+
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UMisc>> MiscMap; // By Name
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UMisc>> MiscByCode; // By Code
 
 };
