@@ -29,34 +29,35 @@ public:
 	// https://d2mods.info/forum/kb/viewarticle?a=369
 };
 
-USTRUCT(BlueprintType)
-struct FItemType : public FTableRowBase
+UCLASS()
+class LOOTGEN_API UItemType : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	FItemType()
+	void Initialize(FName InName, FD2ItemType* ItemType)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Default Constructor of FItemType should not be called!"));
-	}
-
-	FItemType(FD2ItemType* D2ItemType)
-	{
-		Code = D2ItemType->Code;
-		ParentItemType.Add(D2ItemType->Equiv1);
-		ParentItemType.Add(D2ItemType->Equiv2);
-		bAutoTreasureClassGenerate = (bool)D2ItemType->TreasureClass;
+		Name = InName;
+		Code = ItemType->Code;
+		Equiv1 = ItemType->Equiv1;
+		Equiv2 = ItemType->Equiv2;
+		bAutoTreasureClassGenerate = (bool)ItemType->TreasureClass;
 	}
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName Name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName Code;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSet<FName> ParentItemType; /* Equiv1, Equiv2 */
+	FName Equiv1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName Equiv2;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bAutoTreasureClassGenerate; /* TreasureClass */
-
 };
 

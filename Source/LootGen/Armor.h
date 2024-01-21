@@ -13,6 +13,7 @@ struct FD2Armor : public FTableRowBase
 	GENERATED_BODY() 
 
 public:
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Version;
 
@@ -35,20 +36,53 @@ public:
 	int ReqStr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int Level;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int LevelReq;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName Code;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName NameStr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName Type;
 	
 	// TODO: Add more fields 
 	// https://d2mods.info/forum/kb/viewarticle?a=2
 };
 
-USTRUCT(BlueprintType)
-struct FArmor
+UCLASS()
+class LOOTGEN_API UArmor : public UObject
 {
 	GENERATED_BODY()
 
 public:
+	void Initialize(FName InName, FD2Armor* D2Armor)
+	{
+		Name = InName;
+		Version = D2Armor->Version;
+		Rarity = D2Armor->Rarity;
+		bSpawnable = (bool)D2Armor->Spawnable;
+		MinAC = D2Armor->MinAC;
+		MaxAC = D2Armor->MaxAC;
+		Speed = D2Armor->Speed;
+		ReqStr = D2Armor->ReqStr;
+		Level = D2Armor->Level;
+		LevelReq = D2Armor->LevelReq;
+		Code = D2Armor->Code;
+		NameStr = D2Armor->NameStr;
+		Type = D2Armor->Type;
+	};
+
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int Version; 
+	FName Name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int Version;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Rarity;
@@ -69,7 +103,19 @@ public:
 	int ReqStr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int Level;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int LevelReq;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName Code;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName NameStr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName Type;
 
 	// TODO: Add more fields 
 	// https://d2mods.info/forum/kb/viewarticle?a=2
