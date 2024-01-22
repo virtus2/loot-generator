@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+#include "ItemInfo.h"
+
 #include "Armor.generated.h"
 
 /* The original data structure used by Diablo II (Used to import .txt data) */
@@ -55,7 +57,7 @@ public:
 };
 
 UCLASS()
-class LOOTGEN_API UArmor : public UObject
+class LOOTGEN_API UArmor : public UObject, public IItemInfo
 {
 	GENERATED_BODY()
 
@@ -77,6 +79,25 @@ public:
 		Type = D2Armor->Type;
 	};
 
+	virtual FName GetName() override
+	{
+		return Name;
+	}
+
+	virtual int GetLevel() override
+	{
+		return Level;
+	}
+
+	virtual FName GetType() override
+	{
+		return Type;
+	}
+
+	virtual FName GetCode() override
+	{
+		return Code;
+	}
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName Name;
