@@ -39,8 +39,8 @@ public:
 	{
 		Name = InName;
 		Code = ItemType->Code;
-		Equiv1 = ItemType->Equiv1;
-		Equiv2 = ItemType->Equiv2;
+		Equiv.Add(ItemType->Equiv1);
+		Equiv.Add(ItemType->Equiv2);
 		bAutoTreasureClassGenerate = (bool)ItemType->TreasureClass;
 	}
 
@@ -52,10 +52,7 @@ public:
 	FName Code;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName Equiv1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName Equiv2;
+	TArray<FName> Equiv;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bAutoTreasureClassGenerate; /* TreasureClass */

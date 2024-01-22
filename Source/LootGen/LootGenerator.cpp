@@ -40,9 +40,10 @@ ULootGenerator::ULootGenerator(const FObjectInitializer& ObjectInitializer)
 }
 
 template<typename FD2, typename T>
+requires std::derived_from<FD2, FTableRowBase>
 void ULootGenerator::Initialize(TObjectPtr<UDataTable> DataTable, TMap<FName, TObjectPtr<T>>& MapByName, TMap<FName, TObjectPtr<T>>& MapByCode)
 {
-const FString Context;
+	const FString Context;
 	TArray<FName> Names = DataTable->GetRowNames();
 	for (const auto& Name : Names)
 	{
@@ -51,6 +52,57 @@ const FString Context;
 		Item->Initialize(Name, Data);
 		MapByName.Add(Name, Item);
 		MapByCode.Add(Item->Code, Item);
+	}
+}
+
+template<typename T>
+requires std::derived_from<T, IItemInfo>
+void ULootGenerator::AutoGenerateTreasureClass(TObjectPtr<UItemType> ItemTypeToGenerate, int Level, FTreasureClass& TreasureClass, TMap<FName, TObjectPtr<T>>& MapByName, TMap<FName, TObjectPtr<T>>& MapByCode)
+{
+	for (const auto& Item : MapByName)
+	{
+		// If Item's level is too low or too high, then skip.
+		int ItemLevel = Item.Value->GetLevel();
+		if (ItemLevel <= Level || ItemLevel > Level + 3)
+		{
+			continue;
+		}
+
+		UItemType* ItemType = *ItemTypeByCode.Find(Item.Value->GetType());
+		if (ItemType == nullptr)
+		{
+			continue;
+		}
+
+		// If the type of item is the same as given ItemType(ItemTypeToGenerate), then add it to the TreasureClass.
+		if (ItemType->Code.IsEqual(ItemTypeToGenerate->Code))
+		{
+			TreasureClass.ItemProb.Add(Item.Value->GetCode(), 1);
+			TreasureClass.TotalProb += 1;
+		}
+
+		// If the type of item is not the same as given ItemType(ItemTypeToGenerate), then check the Equiv.
+		// Equiv is the parent item types of this item's type.
+		for (int i = 0; i < ItemType->Equiv.Num(); i++)
+		{
+			FName ParentItemTypeCode = ItemType->Equiv[i];
+			while (ParentItemTypeCode.IsNone() == false)
+			{
+				if (ParentItemTypeCode == ItemTypeToGenerate->Code)
+				{
+					TreasureClass.ItemProb.Add(Item.Value->GetCode(), 1);
+					TreasureClass.TotalProb += 1;
+				}
+
+				// If the parent item type is not the same as given ItemType(ItemTypeToGenerate), then check the parent's parent.
+				UItemType* ParentItemType = *ItemTypeByCode.Find(ParentItemTypeCode);
+				if (ParentItemType == nullptr)
+				{
+					break;
+				}
+				ParentItemTypeCode = ParentItemType->Equiv[i];
+			}
+		}
 	}
 }
 
@@ -81,158 +133,9 @@ void ULootGenerator::InitializeTreasureClassData(TObjectPtr<UDataTable> Treasure
 			TreasureClass.Picks = 1;
 			TreasureClass.NoDrop = 0;
 			// Generate TreasureClass by using Weapon.txt
-			for (const auto& Weapon : WeaponMap)
-			{
-				if (Weapon.Value->Level <= i || Weapon.Value->Level > i + 3)
-				{
-					continue;
-				}
-
-				UItemType* ItemTypeOfWeapon = *ItemTypeByCode.Find(Weapon.Value->Type);
-				if (ItemTypeOfWeapon == nullptr)
-				{
-					continue;
-				}
-
-				if (ItemTypeOfWeapon->Code.IsEqual(ItemType.Value->Code))
-				{
-					TreasureClass.ItemProb.Add(Weapon.Value->Code, 1);
-					TreasureClass.TotalProb += 1;
-				}
-
-				FName ParentItemTypeCode = ItemTypeOfWeapon->Equiv1;
-				while (ParentItemTypeCode.IsNone() == false)
-				{
-					if (ParentItemTypeCode == ItemType.Value->Code)
-					{
-						TreasureClass.ItemProb.Add(Weapon.Value->Code, 1);
-						TreasureClass.TotalProb += 1;
-					}
-
-					UItemType* ParentItemType = *ItemTypeByCode.Find(ParentItemTypeCode);
-					if(ParentItemType == nullptr)
-					{
-						break;
-					}
-					ParentItemTypeCode = ParentItemType->Equiv1;
-				}
-
-				ParentItemTypeCode = ItemTypeOfWeapon->Equiv2;
-				while (ParentItemTypeCode.IsNone() == false)
-				{
-					if (ParentItemTypeCode == ItemType.Value->Code)
-					{
-						TreasureClass.ItemProb.Add(Weapon.Value->Code, 1);
-						TreasureClass.TotalProb += 1;
-					}
-
-					UItemType* ParentItemType = *ItemTypeByCode.Find(ParentItemTypeCode);
-					if (ParentItemType == nullptr)
-					{
-						break;
-					}
-					ParentItemTypeCode = ParentItemType->Equiv2;
-				}
-			}
-
-			// Generate TreasureClass by using Armor.txt
-			for (const auto& Armor : ArmorMap)
-			{
-				if (Armor.Value->Level <= i || Armor.Value->Level >= i + 3)
-				{
-					continue;
-				}
-
-				UItemType* ItemTypeOfArmor = *ItemTypeByCode.Find(Armor.Value->Type);
-				if (ItemTypeOfArmor == nullptr)
-				{
-					continue;
-				}
-
-				FName ParentItemTypeCode = ItemTypeOfArmor->Equiv1;
-				while (ParentItemTypeCode.IsNone() == false)
-				{
-					if (ParentItemTypeCode == ItemType.Value->Code)
-					{
-						TreasureClass.ItemProb.Add(Armor.Value->Code, 1);
-						TreasureClass.TotalProb += 1;
-					}
-
-					UItemType* ParentItemType = *ItemTypeByCode.Find(ParentItemTypeCode);
-					if (ParentItemType == nullptr)
-					{
-						break;
-					}
-					ParentItemTypeCode = ParentItemType->Equiv1;
-				}
-
-				ParentItemTypeCode = ItemTypeOfArmor->Equiv2;
-				while (ParentItemTypeCode.IsNone() == false)
-				{
-					if (ParentItemTypeCode == ItemType.Value->Code)
-					{
-						TreasureClass.ItemProb.Add(Armor.Value->Code, 1);
-						TreasureClass.TotalProb += 1;
-					}
-
-					UItemType* ParentItemType = *ItemTypeByCode.Find(ParentItemTypeCode);
-					if (ParentItemType == nullptr)
-					{
-						break;
-					}
-					ParentItemTypeCode = ParentItemType->Equiv2;
-				}
-
-			}
-
-			// Generate TreasureClass by using Misc.txt
-			for (const auto& Misc : MiscMap)
-			{
-				if (Misc.Value->Level <= i || Misc.Value->Level >= i + 3)
-				{
-					continue;
-				}
-
-				UItemType* ItemTypeOfMisc = *ItemTypeByCode.Find(Misc.Value->Type);
-				if (ItemTypeOfMisc == nullptr)
-				{
-					continue;
-				}
-
-				FName ParentItemTypeCode = ItemTypeOfMisc->Equiv1;
-				while (ParentItemTypeCode.IsNone() == false)
-				{
-					if (ParentItemTypeCode == ItemType.Value->Code)
-					{
-						TreasureClass.ItemProb.Add(Misc.Value->Code, 1);
-						TreasureClass.TotalProb += 1;
-					}
-
-					UItemType* ParentItemType = *ItemTypeByCode.Find(ParentItemTypeCode);
-					if (ParentItemType == nullptr)
-					{
-						break;
-					}
-					ParentItemTypeCode = ParentItemType->Equiv1;
-				}
-
-				ParentItemTypeCode = ItemTypeOfMisc->Equiv2;
-				while (ParentItemTypeCode.IsNone() == false)
-				{
-					if (ParentItemTypeCode == ItemType.Value->Code)
-					{
-						TreasureClass.ItemProb.Add(Misc.Value->Code, 1);
-						TreasureClass.TotalProb += 1;
-					}
-
-					UItemType* ParentItemType = *ItemTypeByCode.Find(ParentItemTypeCode);
-					if (ParentItemType == nullptr)
-					{
-						break;
-					}
-					ParentItemTypeCode = ParentItemType->Equiv2;
-				}
-			}
+			AutoGenerateTreasureClass<UWeapon>(ItemType.Value, i, TreasureClass, WeaponMap, WeaponByCode);
+			AutoGenerateTreasureClass<UArmor>(ItemType.Value, i, TreasureClass, ArmorMap, ArmorByCode);
+			AutoGenerateTreasureClass<UMisc>(ItemType.Value, i, TreasureClass, MiscMap, MiscByCode);
 			TreasureClassMap.Add(TreasureClassName, TreasureClass);
 		}
 	}

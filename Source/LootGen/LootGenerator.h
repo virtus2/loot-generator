@@ -10,6 +10,7 @@
 #include "Armor.h"
 #include "Weapon.h"
 #include "Misc.h"
+#include "ItemInfo.h"
 
 #include "LootGenerator.generated.h"
 
@@ -24,15 +25,32 @@ class LOOTGEN_API ULootGenerator : public UGameInstanceSubsystem
 public:
 	ULootGenerator(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+public:
+	/* Data Table Initialization */
 	template<typename FD2, typename T>
+	requires std::derived_from<FD2, FTableRowBase>
 	void Initialize(TObjectPtr<UDataTable> DataTable, TMap<FName, TObjectPtr<T>>& MapByName, TMap<FName, TObjectPtr<T>>& MapByCode);
+
 	void InitializeTreasureClassData(TObjectPtr<UDataTable> TreasureClassDataTable);
 
+public:
+	/* TreasureClass Auto Generation */
+	template<typename T>
+	requires std::derived_from<T, IItemInfo>
+	void AutoGenerateTreasureClass(TObjectPtr<UItemType> ItemTypeToGenerate, int Level, FTreasureClass& TreasureClass, TMap<FName, TObjectPtr<T>>& MapByName, TMap<FName, TObjectPtr<T>>& MapByCode);
+
+public:
+	/* Item Generation */
 	void DetermineItemAndQuality(FName TreasureClassNameOrItemCode, FQualityFactor QualityFactor = FQualityFactor());
+
 	FTreasureClass* FindTreasureClassFromDataTable(FName TreasureClassName);
+
 	void RollTreasureClassPicks(FTreasureClass* TreasureClass, FQualityFactor& QualityFactor);
+
 	void GenerateLoot(FName ItemCode, FQualityFactor& QualityFactor);
 
+public:
+	/* TEST FUNCTIONS */
 	UFUNCTION(BlueprintCallable)
 	void TestGenerateLoot(FName TreasureClassNameOrItemCode, int Count);
 
