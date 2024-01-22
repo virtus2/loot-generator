@@ -55,6 +55,41 @@ void ULootGenerator::Initialize(TObjectPtr<UDataTable> DataTable, TMap<FName, TO
 	}
 }
 
+void ULootGenerator::InitializeTreasureClassData(TObjectPtr<UDataTable> TreasureClassDataTable)
+{
+	// Initialize the TMap<Name, TreasureClass> using TreasureClassEx.txt
+	const FString Context;
+	TArray<FName> TreasureClassNames = TreasureClassDataTable->GetRowNames();
+	for (const auto& Name : TreasureClassNames)
+	{
+		FD2TreasureClass* D2TreasureClass = TreasureClassDataTable->FindRow<FD2TreasureClass>(Name, Context);
+		FTreasureClass TreasureClass(D2TreasureClass);
+		TreasureClassMap.Add(Name, TreasureClass);
+	}
+
+	// Generate the runtime treasureclasses using ItemType.txt
+	for (const auto& ItemType : ItemTypeByCode)
+	{
+		if (ItemType.Value->bAutoTreasureClassGenerate == false)
+		{
+			continue;
+		}
+
+		for (int i = 0; i < 100; i += 3)
+		{
+			FTreasureClass TreasureClass;
+			FName TreasureClassName = FName(*(ItemType.Value->Code.ToString() + FString::FromInt(i)));
+			TreasureClass.Picks = 1;
+			TreasureClass.NoDrop = 0;
+			// Generate TreasureClass by using Weapon.txt
+			AutoGenerateTreasureClass<UWeapon>(ItemType.Value, i, TreasureClass, WeaponMap, WeaponByCode);
+			AutoGenerateTreasureClass<UArmor>(ItemType.Value, i, TreasureClass, ArmorMap, ArmorByCode);
+			AutoGenerateTreasureClass<UMisc>(ItemType.Value, i, TreasureClass, MiscMap, MiscByCode);
+			TreasureClassMap.Add(TreasureClassName, TreasureClass);
+		}
+	}
+}
+
 template<typename T>
 requires std::derived_from<T, IItemInfo>
 void ULootGenerator::AutoGenerateTreasureClass(TObjectPtr<UItemType> ItemTypeToGenerate, int Level, FTreasureClass& TreasureClass, TMap<FName, TObjectPtr<T>>& MapByName, TMap<FName, TObjectPtr<T>>& MapByCode)
@@ -106,40 +141,6 @@ void ULootGenerator::AutoGenerateTreasureClass(TObjectPtr<UItemType> ItemTypeToG
 	}
 }
 
-void ULootGenerator::InitializeTreasureClassData(TObjectPtr<UDataTable> TreasureClassDataTable)
-{
-	// Initialize the TMap<Name, TreasureClass> using TreasureClassEx.txt
-	const FString Context;
-	TArray<FName> TreasureClassNames = TreasureClassDataTable->GetRowNames();
-	for (const auto& Name : TreasureClassNames)
-	{
-		FD2TreasureClass* D2TreasureClass = TreasureClassDataTable->FindRow<FD2TreasureClass>(Name, Context);
-		FTreasureClass TreasureClass(D2TreasureClass);
-		TreasureClassMap.Add(Name, TreasureClass);
-	}
-
-	// Generate the runtime treasureclasses using ItemType.txt
-	for (const auto& ItemType : ItemTypeByCode)
-	{
-		if (ItemType.Value->bAutoTreasureClassGenerate == false)
-		{
-			continue;
-		}
-
-		for (int i = 0; i < 100; i += 3)
-		{
-			FTreasureClass TreasureClass;
-			FName TreasureClassName = FName(*(ItemType.Value->Code.ToString() + FString::FromInt(i)));
-			TreasureClass.Picks = 1;
-			TreasureClass.NoDrop = 0;
-			// Generate TreasureClass by using Weapon.txt
-			AutoGenerateTreasureClass<UWeapon>(ItemType.Value, i, TreasureClass, WeaponMap, WeaponByCode);
-			AutoGenerateTreasureClass<UArmor>(ItemType.Value, i, TreasureClass, ArmorMap, ArmorByCode);
-			AutoGenerateTreasureClass<UMisc>(ItemType.Value, i, TreasureClass, MiscMap, MiscByCode);
-			TreasureClassMap.Add(TreasureClassName, TreasureClass);
-		}
-	}
-}
 
 void ULootGenerator::DetermineItemAndQuality(FName TreasureClassNameOrItemCode, FQualityFactor QualityFactor)
 {
