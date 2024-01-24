@@ -36,17 +36,17 @@ ULootGenerator::ULootGenerator(const FObjectInitializer& ObjectInitializer)
 	TObjectPtr<UDataTable> ItemTypeDataTable = ItemTypeDataTableClass.Object;
 	TObjectPtr<UDataTable> TreasureClassDataTable = TreasureClassDataTableClass.Object;
 
-	Initialize<FD2Weapon, UWeapon>(WeaponDataTable, WeaponMap, WeaponByCode);
-	Initialize<FD2Armor, UArmor>(ArmorDataTable, ArmorMap, ArmorByCode);
-	Initialize<FD2Misc, UMisc>(MiscDataTable, MiscMap, MiscByCode);
-	Initialize<FD2ItemType, UItemType>(ItemTypeDataTable, ItemTypeMap, ItemTypeByCode);
+	InitializeData<FD2Weapon, UWeapon>(WeaponDataTable, WeaponMap, WeaponByCode);
+	InitializeData<FD2Armor, UArmor>(ArmorDataTable, ArmorMap, ArmorByCode);
+	InitializeData<FD2Misc, UMisc>(MiscDataTable, MiscMap, MiscByCode);
+	InitializeData<FD2ItemType, UItemType>(ItemTypeDataTable, ItemTypeMap, ItemTypeByCode);
 
 	InitializeTreasureClassData(TreasureClassDataTable); // Must be called after the initialization of the ItemType.
 }
 
 template<typename FD2, typename T>
 requires std::derived_from<FD2, FTableRowBase>
-void ULootGenerator::Initialize(TObjectPtr<UDataTable> DataTable, TMap<FName, TObjectPtr<T>>& MapByName, TMap<FName, TObjectPtr<T>>& MapByCode)
+void ULootGenerator::InitializeData(TObjectPtr<UDataTable> DataTable, TMap<FName, TObjectPtr<T>>& MapByName, TMap<FName, TObjectPtr<T>>& MapByCode)
 {
 	const FString Context;
 	TArray<FName> Names = DataTable->GetRowNames();

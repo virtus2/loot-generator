@@ -15,6 +15,7 @@
 #include "LootGenerator.generated.h"
 
 class UItemBase;
+class ALootActor;
 
 /**
  * 
@@ -31,7 +32,7 @@ public:
 	/* Data Table Initialization */
 	template<typename FD2, typename T>
 	requires std::derived_from<FD2, FTableRowBase>
-	void Initialize(TObjectPtr<UDataTable> DataTable, TMap<FName, TObjectPtr<T>>& MapByName, TMap<FName, TObjectPtr<T>>& MapByCode);
+	void InitializeData(TObjectPtr<UDataTable> DataTable, TMap<FName, TObjectPtr<T>>& MapByName, TMap<FName, TObjectPtr<T>>& MapByCode);
 
 	void InitializeTreasureClassData(TObjectPtr<UDataTable> TreasureClassDataTable);
 
@@ -80,5 +81,8 @@ private:
 	TMap<FName, TObjectPtr<UMisc>> MiscMap; // By Name
 	UPROPERTY()
 	TMap<FName, TObjectPtr<UMisc>> MiscByCode; // By Code
+
+	UPROPERTY()
+	TSubclassOf<ALootActor> LootActorTemplate; // TODO: Move to other class like Data Asset?
 
 };
