@@ -14,6 +14,8 @@
 
 #include "LootGenerator.generated.h"
 
+class UItemBase;
+
 /**
  * 
  */
@@ -41,13 +43,15 @@ public:
 
 public:
 	/* Item Generation */
-	void DetermineItemAndQuality(FName TreasureClassNameOrItemCode, FQualityFactor QualityFactor = FQualityFactor());
+	void SpawnLootsAt(FVector Location, TArray<FName> TreasureClassNames);
+
+	void GenerateLootAt(FName TreasureClassNameOrItemCode, FVector& Location, FQualityFactor& QualityFactor);
 
 	FTreasureClass* FindTreasureClassFromDataTable(FName TreasureClassName);
+	
+	void RollTreasureClassPicks(FTreasureClass* TreasureClass, FVector& Location, FQualityFactor& QualityFactor);
 
-	void RollTreasureClassPicks(FTreasureClass* TreasureClass, FQualityFactor& QualityFactor);
-
-	void GenerateLoot(FName ItemCode, FQualityFactor& QualityFactor);
+	TObjectPtr<UItemBase> GenerateItem(FName ItemCode, FQualityFactor& QualityFactor);
 
 public:
 	/* TEST FUNCTIONS */

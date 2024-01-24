@@ -3,6 +3,11 @@
 
 #include "LootGenerator.h"
 
+#include "ItemWeapon.h"
+#include "ItemArmor.h"
+#include "LootActor.h"
+
+
 #include "TreasureClass.h"
 
 ULootGenerator::ULootGenerator(const FObjectInitializer& ObjectInitializer)
@@ -142,18 +147,37 @@ void ULootGenerator::AutoGenerateTreasureClass(TObjectPtr<UItemType> ItemTypeToG
 }
 
 
-void ULootGenerator::DetermineItemAndQuality(FName TreasureClassNameOrItemCode, FQualityFactor QualityFactor)
+void ULootGenerator::SpawnLootsAt(FVector Location, TArray<FName> TreasureClassNames)
+{
+	for (const auto& TreasureClassName : TreasureClassNames)
+	{
+		FQualityFactor QualityFactor;
+		GenerateLootAt(TreasureClassName, Location, QualityFactor);
+	}
+}
+
+void ULootGenerator::GenerateLootAt(FName TreasureClassNameOrItemCode, FVector& Location, FQualityFactor& QualityFactor)
 {
 	// If given name is TreasureClass, then roll that TreasureClass.
 	FTreasureClass* TreasureClass = FindTreasureClassFromDataTable(TreasureClassNameOrItemCode);
 	if (TreasureClass != nullptr)
 	{
-		RollTreasureClassPicks(TreasureClass, QualityFactor);
-		return;
+		RollTreasureClassPicks(TreasureClass, Location, QualityFactor);
 	}
+	else
+	{
+		// If given name is ItemCode, Generate that item.
+		TObjectPtr<UItemBase> Item = GenerateItem(TreasureClassNameOrItemCode, QualityFactor);
 
-	// If given name is ItemCode, then Generate that item.
-	GenerateLoot(TreasureClassNameOrItemCode, QualityFactor);
+		// Spawn the loot and set the item data.
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			FRotator Rotator; // TODO: Set the random rotation.
+			TObjectPtr<ALootActor> LootActor = World->SpawnActor<ALootActor>(ALootActor::StaticClass(), Location, Rotator);
+			LootActor->SetItem(Item);
+		}
+	}
 }
 
 FTreasureClass* ULootGenerator::FindTreasureClassFromDataTable(FName TreasureClassName)
@@ -163,7 +187,7 @@ FTreasureClass* ULootGenerator::FindTreasureClassFromDataTable(FName TreasureCla
 	return TreasureClass;
 }
 
-void ULootGenerator::RollTreasureClassPicks(FTreasureClass* TreasureClass, FQualityFactor& QualityFactor)
+void ULootGenerator::RollTreasureClassPicks(FTreasureClass* TreasureClass, FVector& Location, FQualityFactor& QualityFactor)
 {
 	QualityFactor.Unique = FMath::Max(QualityFactor.Unique, TreasureClass->QualityFactor.Unique);
 	QualityFactor.Set = FMath::Max(QualityFactor.Set, TreasureClass->QualityFactor.Set);
@@ -179,7 +203,7 @@ void ULootGenerator::RollTreasureClassPicks(FTreasureClass* TreasureClass, FQual
 			{
 				for (int j = 0; j < Item.Value; j++)
 				{
-					DetermineItemAndQuality(Item.Key, QualityFactor);
+					GenerateLootAt(Item.Key, Location, QualityFactor);
 				}
 			}
 		}
@@ -194,7 +218,7 @@ void ULootGenerator::RollTreasureClassPicks(FTreasureClass* TreasureClass, FQual
 			{
 				if (Random < Item.Value)
 				{
-					DetermineItemAndQuality(Item.Key, QualityFactor);
+					GenerateLootAt(Item.Key, Location, QualityFactor);
 					break;
 				}
 				Random -= Item.Value;
@@ -203,36 +227,43 @@ void ULootGenerator::RollTreasureClassPicks(FTreasureClass* TreasureClass, FQual
 	}
 }
 
-void ULootGenerator::GenerateLoot(FName ItemCode, FQualityFactor& QualityFactor)
+TObjectPtr<UItemBase> ULootGenerator::GenerateItem(FName ItemCode, FQualityFactor& QualityFactor)
 {
 	// Find the item by code.
 	auto Weapon = WeaponByCode.Find(ItemCode);
 	auto Armor = ArmorByCode.Find(ItemCode);
 	auto Misc = MiscByCode.Find(ItemCode);
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *(ItemCode.ToString()));
+
+	// TODO: Set the QualityFactor.
 	if (Weapon != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Weapon: %s"), *(Weapon->Get()->Name.ToString()));
+		TObjectPtr<UItemWeapon> Item = NewObject<UItemWeapon>();
+		Item->SetWeapon(*Weapon);
+		return Item;
 	}
 	else if (Armor != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Armor: %s"), *(Armor->Get()->Name.ToString()));
+		TObjectPtr<UItemArmor> Item = NewObject<UItemArmor>();
+		return Item;
 	}
 	else if (Misc != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Misc: %s"), *(Misc->Get()->Name.ToString()));
+		// TODO: Implement UItemMisc. Might UItemConsumable and UItemRune... etc. be better?
+		TObjectPtr<UItemBase> Item = NewObject<UItemBase>();
+		return Item;
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("There is no item with the code %s"), *(ItemCode.ToString()));
-		return;
+		return nullptr;
 	}
+	return nullptr;
 }
 
 void ULootGenerator::TestGenerateLoot(FName TreasureClassNameOrItemCode, int Count)
 {
 	for (int i = 0; i < Count; i++)
 	{
-		DetermineItemAndQuality(TreasureClassNameOrItemCode);
+		SpawnLootsAt(FVector(0, 0, 0), { TreasureClassNameOrItemCode });
 	}
 }
