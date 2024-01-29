@@ -11,6 +11,7 @@
 #include "Weapon.h"
 #include "Misc.h"
 #include "ItemInfo.h"
+#include "ItemMeshInfo.h"
 
 #include "LootGenerator.generated.h"
 
@@ -44,7 +45,7 @@ public:
 
 public:
 	/* Item Generation */
-	void SpawnLootsAt(FVector Location, TArray<FName> TreasureClassNames);
+	void SpawnLootsAt(FVector Location, TArray<FName>& TreasureClassNames);
 
 	void GenerateLootAt(FName TreasureClassNameOrItemCode, FVector& Location, FQualityFactor& QualityFactor);
 
@@ -57,7 +58,7 @@ public:
 public:
 	/* TEST FUNCTIONS */
 	UFUNCTION(BlueprintCallable)
-	void TestGenerateLoot(FName TreasureClassNameOrItemCode, int Count);
+	void TestGenerateLoot(FName TreasureClassNameOrItemCode, FVector Location, int Count);
 
 private:
 	TMap<FName, FTreasureClass> TreasureClassMap;
@@ -83,6 +84,8 @@ private:
 	TMap<FName, TObjectPtr<UMisc>> MiscByCode; // By Code
 
 	UPROPERTY()
-	TSubclassOf<ALootActor> LootActorTemplate; // TODO: Move to other class like Data Asset?
+	TObjectPtr<ALootActor> LootActor; // TODO: Move to other class like Data Asset?
 
+	UPROPERTY()
+	TObjectPtr<UItemMeshInfo> ItemMeshInfo;
 };

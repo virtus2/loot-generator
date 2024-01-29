@@ -42,6 +42,16 @@ ULootGenerator::ULootGenerator(const FObjectInitializer& ObjectInitializer)
 	InitializeData<FD2ItemType, UItemType>(ItemTypeDataTable, ItemTypeMap, ItemTypeByCode);
 
 	InitializeTreasureClassData(TreasureClassDataTable); // Must be called after the initialization of the ItemType.
+
+	static ConstructorHelpers::FObjectFinder<UItemMeshInfo> ItemMeshInfoObj(TEXT("/Script/LootGen.ItemMeshInfo'/Game/LootGen/DA_ItemMeshInfo.DA_ItemMeshInfo'"));
+	if (IsValid(ItemMeshInfoObj.Object))
+	{
+		ItemMeshInfo = ItemMeshInfoObj.Object;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("The ItemMeshInfo of ULootGenerator is not valid."));
+	}
 }
 
 template<typename FD2, typename T>
@@ -147,7 +157,7 @@ void ULootGenerator::AutoGenerateTreasureClass(TObjectPtr<UItemType> ItemTypeToG
 }
 
 
-void ULootGenerator::SpawnLootsAt(FVector Location, TArray<FName> TreasureClassNames)
+void ULootGenerator::SpawnLootsAt(FVector Location, TArray<FName>& TreasureClassNames)
 {
 	for (const auto& TreasureClassName : TreasureClassNames)
 	{
@@ -174,8 +184,18 @@ void ULootGenerator::GenerateLootAt(FName TreasureClassNameOrItemCode, FVector& 
 		if (World)
 		{
 			FRotator Rotator; // TODO: Set the random rotation.
-			TObjectPtr<ALootActor> LootActor = World->SpawnActor<ALootActor>(ALootActor::StaticClass(), Location, Rotator);
-			LootActor->SetItem(Item);
+			TObjectPtr<ALootActor> NewLootActor = World->SpawnActor<ALootActor>(ALootActor::StaticClass(), Location, Rotator);
+			NewLootActor->SetItem(Item);
+
+			auto Mesh = ItemMeshInfo->Meshes.Find(Item->Type);
+			if (Mesh != nullptr)
+			{
+				NewLootActor->SetMesh(*Mesh);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("%s has no mesh."), *(Item->Type.ToString()));
+			}
 		}
 	}
 }
@@ -243,6 +263,7 @@ TObjectPtr<UItemBase> ULootGenerator::GenerateItem(FName ItemCode, FQualityFacto
 	}
 	else if (Armor != nullptr)
 	{
+		// TODO: Implement UItemArmor.
 		TObjectPtr<UItemArmor> Item = NewObject<UItemArmor>();
 		return Item;
 	}
@@ -260,10 +281,11 @@ TObjectPtr<UItemBase> ULootGenerator::GenerateItem(FName ItemCode, FQualityFacto
 	return nullptr;
 }
 
-void ULootGenerator::TestGenerateLoot(FName TreasureClassNameOrItemCode, int Count)
+void ULootGenerator::TestGenerateLoot(FName TreasureClassNameOrItemCode, FVector Location, int Count)
 {
 	for (int i = 0; i < Count; i++)
 	{
-		SpawnLootsAt(FVector(0, 0, 0), { TreasureClassNameOrItemCode });
+		TArray<FName> TC { TreasureClassNameOrItemCode };
+		SpawnLootsAt(Location, TC);
 	}
 }
