@@ -1,2 +1,2 @@
 # loot-generator
-Procedural Item Generation Implementation in UE5
+Diablo II Procedural Item Generation Implementation in UE5
