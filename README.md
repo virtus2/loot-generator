@@ -1,5 +1,5 @@
 # loot-generator
-Diablo II Procedural Item Generation Implementation in UE5
+Diablo II Procedural Item Generation Implementation in UE5  
 디아블로2 아이템 절차적 생성을 언리얼 엔진5로 구현한 프로젝트입니다.  
 
 
